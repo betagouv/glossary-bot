@@ -10,13 +10,13 @@ import random
 import re
 
 STATS_CMDS = ("stats",)
-RECENT_CMDS = ("learnings", "recent")
-HELP_CMDS = ("help", "?")
+RECENT_CMDS = ("appris", "recent")
+HELP_CMDS = ("aide", "?")
 SET_CMDS = ("=",)
-DELETE_CMDS = ("delete",)
-SEARCH_CMDS = ("search",)
+DELETE_CMDS = ("effacer",)
+SEARCH_CMDS = ("chercher",)
 
-ALIAS_KEYWORDS = ("see also", "see")
+ALIAS_KEYWORDS = ("voir aussi", "voir")
 
 BOT_NAME = "/trad (Traducteur d'acronymes de l'administration)"
 BOT_EMOJI = ":book:"
@@ -125,9 +125,9 @@ def get_stats():
     definers = db.session.query(func.count(distinct(Definition.user_name))).scalar()
     queries = db.session.query(func.count(Interaction.action)).scalar()
     outputs = (
-        ("I have definitions for", entries, "term", "terms", "I don't have any definitions"),
-        ("", definers, "person has defined terms", "people have defined terms", "Nobody has defined terms"),
-        ("I've been asked for definitions", queries, "time", "times", "Nobody has asked me for definitions")
+        ("J'ai des définitions pour", entries, "terme", "termes", "Je n'ai aucune définition"),
+        ("", definers, "personnes ont défini des termes", "personnes ont défini des termes", "Personne n'a défini de termes"),
+        ("On m'a demandé des définitions", queries, "fois", "fois", "Personne ne m'a demandé de définition")
     )
     lines = []
     for prefix, period, singular, plural, empty_line in outputs:
@@ -145,17 +145,17 @@ def get_learnings(how_many=12, sort_order="recent", offset=0):
     order_random = func.random()
     order_alphabetical = Definition.term
     order_function = order_descending
-    prefix_singluar = "I recently learned the definition for"
-    prefix_plural = "I recently learned definitions for"
-    no_definitions_text = "I haven't learned any definitions yet."
+    prefix_singluar = "J'ai récemment enregistré une définition pour"
+    prefix_plural = "J'ai récemment enregistré des définitions pour"
+    no_definitions_text = "Je n'ai encore enregistré aucune définition."
     if sort_order == "random":
         order_function = order_random
     elif sort_order == "alpha":
         order_function = order_alphabetical
 
     if sort_order == "random" or sort_order == "alpha" or offset > 0:
-        prefix_singluar = "I know the definition for"
-        prefix_plural = "I know definitions for"
+        prefix_singluar = "Je connais une définition pour"
+        prefix_plural = "Je connais des définitions pour"
 
     # if how_many is 0, ignore offset and return all results
     if how_many == 0:
@@ -267,12 +267,12 @@ def query_definition_and_get_response(slash_command, command_text, user_name, ch
         # remember this query
         log_query(term=command_text, user_name=user_name, action="not_found")
 
-        message = "Sorry, but *{bot_name}* has no definition for *{term}*. You can set a definition with the command *{command} {term} = _definition_*".format(bot_name=BOT_NAME, command=slash_command, term=command_text)
+        message = "Désolé, *{bot_name}* n'a pas de définition pour *{term}*. Le mieux serait de l'ajouter :smiley: Pour cela, il suffit de taper *{command} {term} = _définition_*".format(bot_name=BOT_NAME, command=slash_command, term=command_text)
 
         search_results = get_matches_for_term(command_text)
         if len(search_results):
             search_results_styled = ', '.join([make_bold(term) for term in search_results])
-            message = "{}, or try asking for one of these terms that may be related: {}".format(message, search_results_styled)
+            message = "{}, ou essayez l'un de ces termes associés : {}".format(message, search_results_styled)
 
         return message, 200
 
@@ -306,9 +306,9 @@ def search_term_and_get_response(command_text):
     search_results = get_matches_for_term(command_text)
     if len(search_results):
         search_results_styled = ', '.join([make_bold(term) for term in search_results])
-        message = "{bot_name} found {term} in: {results}".format(bot_name=BOT_NAME, term=make_bold(command_text), results=search_results_styled)
+        message = "{bot_name} a trouvé {term} dans : {results}".format(bot_name=BOT_NAME, term=make_bold(command_text), results=search_results_styled)
     else:
-        message = "{bot_name} could not find {term} in any terms or definitions.".format(bot_name=BOT_NAME, term=make_bold(command_text))
+        message = "{bot_name} n'a trouvé {term} dans aucun acronyme ni aucune définition.".format(bot_name=BOT_NAME, term=make_bold(command_text))
 
     return message, 200
 
@@ -321,11 +321,11 @@ def set_definition_and_get_response(slash_command, command_params, user_name):
 
     # reject poorly formed set commands
     if "=" not in command_params or not set_term or not set_value:
-        return "Sorry, but *{bot_name}* didn't understand your command. You can set definitions like this: *{command} EW = Eligibility Worker*".format(bot_name=BOT_NAME, command=slash_command), 200
+        return "Désolé, *{bot_name}* n'a pas compris votre commande. Vous pouvez définir des termes ainsi : *{command} DINUM = Direction Interministérielle du NUMérique*".format(bot_name=BOT_NAME, command=slash_command), 200
 
     # reject attempts to set reserved terms
     if set_term.lower() in STATS_CMDS + RECENT_CMDS + HELP_CMDS:
-        return "Sorry, but *{bot_name}* can't set a definition for {term} because it's a reserved term.".format(bot_name=BOT_NAME, term=make_bold(set_term))
+        return "Désolé, *{bot_name}* ne peut pas ajouter une définition pour {term} car c'est un mot réservé.".format(bot_name=BOT_NAME, term=make_bold(set_term))
 
     # check the database to see if the term's already defined
     entry = query_definition(set_term)
@@ -342,12 +342,12 @@ def set_definition_and_get_response(slash_command, command_params, user_name):
                 db.session.add(entry)
                 db.session.commit()
             except Exception as e:
-                return "Sorry, but *{bot_name}* was unable to update that definition: {message}, {args}".format(bot_name=BOT_NAME, message=e.message, args=e.args), 200
+                return "Désolé, *{bot_name}* n'a pas réussi à mettre à jour cette définition : {message}, {args}".format(bot_name=BOT_NAME, message=e.message, args=e.args), 200
 
-            return "*{bot_name}* has set the definition for {term} to {definition}, overwriting the previous entry, which was {prev_term} defined as {prev_def}".format(bot_name=BOT_NAME, term=make_bold(set_term), definition=make_bold(set_value), prev_term=make_bold(last_term), prev_def=make_bold(last_value)), 200
+            return "*{bot_name}* a ajouté la définition {definition} pour {term} , en remplaçant l'ancienne qui était {prev_def} pour {prev_term}".format(bot_name=BOT_NAME, term=make_bold(set_term), definition=make_bold(set_value), prev_term=make_bold(last_term), prev_def=make_bold(last_value)), 200
 
         else:
-            return "*{bot_name}* already knows that the definition for {term} is {definition}".format(bot_name=BOT_NAME, term=make_bold(set_term), definition=make_bold(set_value)), 200
+            return "*{bot_name}* avait déjà enregistré la définition {definition} pour {term}.".format(bot_name=BOT_NAME, term=make_bold(set_term), definition=make_bold(set_value)), 200
 
     # save the definition in the database
     entry = Definition(term=set_term, definition=set_value, user_name=user_name)
@@ -355,9 +355,9 @@ def set_definition_and_get_response(slash_command, command_params, user_name):
         db.session.add(entry)
         db.session.commit()
     except Exception as e:
-        return "Sorry, but *{bot_name}* was unable to save that definition: {message}, {args}".format(bot_name=BOT_NAME, message=e.message, args=e.args), 200
+        return "Désolé, *{bot_name}* n'a pas pu enregistrer cette définition : {message}, {args}".format(bot_name=BOT_NAME, message=e.message, args=e.args), 200
 
-    return "*{bot_name}* has set the definition for {term} to {definition}".format(bot_name=BOT_NAME, term=make_bold(set_term), definition=make_bold(set_value)), 200
+    return "*{bot_name}* a enregistré la définition {definition} pour le terme {term}.".format(bot_name=BOT_NAME, term=make_bold(set_term), definition=make_bold(set_value)), 200
 
 #
 # ROUTES
@@ -418,16 +418,16 @@ def index():
         # verify that the definition is in the database
         entry = query_definition(delete_term)
         if not entry:
-            return "Sorry, but *{bot_name}* has no definition for {term}".format(bot_name=BOT_NAME, term=make_bold(delete_term)), 200
+            return "Désolé, *{bot_name}* n'a pas de définition pour {term}".format(bot_name=BOT_NAME, term=make_bold(delete_term)), 200
 
         # delete the definition from the database
         try:
             db.session.delete(entry)
             db.session.commit()
         except Exception as e:
-            return "Sorry, but *{bot_name}* was unable to delete that definition: {message}, {args}".format(bot_name=BOT_NAME, message=e.message, args=e.args), 200
+            return "Désolé, *{bot_name}* n'a pas réussi à effacer cette définition : {message}, {args}".format(bot_name=BOT_NAME, message=e.message, args=e.args), 200
 
-        return "*{bot_name}* has deleted the definition for {term}, which was {definition}".format(bot_name=BOT_NAME, term=make_bold(delete_term), definition=make_bold(entry.definition)), 200
+        return "*{bot_name}* a effacé la définition de {term} (anciennement « {definition} »)".format(bot_name=BOT_NAME, term=make_bold(delete_term), definition=make_bold(entry.definition)), 200
 
     #
     # SEARCH for a string
@@ -443,7 +443,7 @@ def index():
     #
 
     if command_action in HELP_CMDS or command_text.strip() == "":
-        return "*{command} _term_* to show the definition for a term\n*{command} _term_ = _definition_* to set the definition for a term\n*{command} _alias_ = see _term_* to set an alias for a term\n*{command} delete _term_* to delete the definition for a term\n*{command} stats* to show usage statistics\n*{command} recent* to show recently defined terms\n*{command} search _term_* to search terms and definitions\n*{command} shh _command_* to get a private response\n*{command} help* to see this message\n<https://github.com/codeforamerica/glossary-bot/issues|report bugs and request features>".format(command=slash_command), 200
+        return "*{command} _acronyme_* pour voir la définition d'un terme\n*{command} _acronyme_ = _définition_* pour définir un terme\n*{command} _alias_ = voir _acronyme_* pour définir un alias pour un terme\n*{command} effacer _acronyme_* pour effacer un terme\n*{command} stats* pour voir les statistiques d'usage\n*{command} recent* pour voir les définitions récentes\n*{command} chercher _acronyme_* pour chercher dans les termes et les définitions\n*{command} shh _commande_* pour avoir une réponse en privé\n*{command} aide* pour voir ce message\n<https://github.com/betagouv/glossary-bot|Code source>".format(command=slash_command), 200
 
     #
     # STATS
@@ -454,7 +454,7 @@ def index():
         stats_comma = re.sub("\n", ", ", stats_newline)
         if not private_response:
             # send the message
-            fallback = "{name} {command} stats: {comma}".format(name=user_name, command=slash_command, comma=stats_comma)
+            fallback = "{name} {command} stats : {comma}".format(name=user_name, command=slash_command, comma=stats_comma)
             pretext = "*{name}* {command} stats".format(name=user_name, command=slash_command)
             title = ""
             send_webhook_with_attachment(channel_id=channel_id, text=stats_newline, fallback=fallback, pretext=pretext, title=title)
