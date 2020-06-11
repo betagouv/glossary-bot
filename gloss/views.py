@@ -18,7 +18,7 @@ SEARCH_CMDS = ("chercher",)
 
 ALIAS_KEYWORDS = ("voir aussi", "voir")
 
-BOT_NAME = "/trad (Traducteur d'acronymes de l'administration)"
+BOT_NAME = "/trad (Traducteur de sigles de l'administration)"
 BOT_EMOJI = ":book:"
 
 '''
@@ -308,7 +308,7 @@ def search_term_and_get_response(command_text):
         search_results_styled = ', '.join([make_bold(term) for term in search_results])
         message = "{bot_name} a trouvé {term} dans : {results}".format(bot_name=BOT_NAME, term=make_bold(command_text), results=search_results_styled)
     else:
-        message = "{bot_name} n'a trouvé {term} dans aucun acronyme ni aucune définition.".format(bot_name=BOT_NAME, term=make_bold(command_text))
+        message = "{bot_name} n'a trouvé {term} dans aucun sigle ni aucune définition.".format(bot_name=BOT_NAME, term=make_bold(command_text))
 
     return message, 200
 
@@ -443,7 +443,7 @@ def index():
     #
 
     if command_action in HELP_CMDS or command_text.strip() == "":
-        return "*{command} _acronyme_* pour voir la définition d'un terme\n*{command} _acronyme_ = _définition_* pour définir un terme\n*{command} _alias_ = voir _acronyme_* pour définir un alias pour un terme\n*{command} effacer _acronyme_* pour effacer un terme\n*{command} stats* pour voir les statistiques d'usage\n*{command} recent* pour voir les définitions récentes\n*{command} chercher _acronyme_* pour chercher dans les termes et les définitions\n*{command} shh _commande_* pour avoir une réponse en privé\n*{command} aide* pour voir ce message\n<https://github.com/betagouv/glossary-bot|Code source>".format(command=slash_command), 200
+        return "*{command} _sigle_* pour voir la définition d'un terme\n*{command} _sigle_ = _définition_* pour définir un terme\n*{command} _alias_ = voir _sigle_* pour définir un alias pour un terme\n*{command} effacer _sigle_* pour effacer un terme\n*{command} stats* pour voir les statistiques d'usage\n*{command} recent* pour voir les définitions récentes\n*{command} chercher _sigle_* pour chercher dans les termes et les définitions\n*{command} shh _commande_* pour avoir une réponse en privé\n*{command} aide* pour voir ce message\n<https://github.com/betagouv/glossary-bot|Code source>".format(command=slash_command), 200
 
     #
     # STATS
